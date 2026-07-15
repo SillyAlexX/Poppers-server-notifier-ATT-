@@ -5,6 +5,7 @@ using System.IO;
 using System.Net;
 using System.Text;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 [assembly: MelonInfo(typeof(Poppers_server_notifier.Core), "Poppers server notifier", "1.0.0", "Popper", null)]
 [assembly: MelonGame("Alta", "A Township Tale")]
@@ -13,6 +14,17 @@ namespace Poppers_server_notifier
 {
     public class Core : MelonMod
     {
+        // Menu Stuff
+        private Rect window = new Rect(20, 20, 310, 500);
+
+        private GUIStyle windowStyle;
+        private GUIStyle headerStyle;
+        private GUIStyle tabStyle;
+        private GUIStyle activeTabStyle;
+
+        private int selectedTab = 0;
+
+        // Melon Stuff
         private MelonPreferences_Category SNCFG;
         private MelonPreferences_Entry<bool> Notify;
         private MelonPreferences_Entry<string> Webhook;
@@ -21,11 +33,8 @@ namespace Poppers_server_notifier
         {
             LoggerInstance.Msg("I LIVE.");
 
-            Directory.CreateDirectory("Mods/sncfg");
-
-            SNCFG = MelonPreferences.CreateCategory("CFG");
-            SNCFG.SetFilePath("Mods/sncfg/SN.cfg");
-
+            SNCFG = MelonPreferences.CreateCategory("SNCFG");
+            
             Notify = SNCFG.CreateEntry<bool>("Enable webhook notifications", true);
             Webhook = SNCFG.CreateEntry<string>("Webhook URL", "https://discord.com/api/webhooks/your_webhook_url_here");
 
@@ -36,23 +45,77 @@ namespace Poppers_server_notifier
 
         private void DrawMenu()
         {
-            float width = 400;
-            float height = 300;
+            SetupStyles();
+            window = GUI.Window(1234, window, DrawWindow, " ", windowStyle);
+        }
 
-            Rect window = new Rect((Screen.width - width) / 2, (Screen.height - height) / 2, width, height);
 
-            GUI.Box(window, "Poppers Server Notifier Config");
+        private void DrawWindow(int id)
+        {
+            // Header
+            GUI.Box(new Rect(0, 0, window.width, 35), "POPPERS DISCORD SERVER NOTIFYER", headerStyle);
 
-            GUI.Label(new Rect(window.x + 20, window.y + 40, 220, 30), "Enable webhook notifications:");
 
-            bool oldValue = Notify.Value;
+            // Tabs
+            string[] tabs ={"TEST WEBHOOK","SAVE"};
 
-            Notify.Value = GUI.Toggle(new Rect(window.x + 250, window.y + 40, 50, 30),Notify.Value, "");
+            float width = window.width / tabs.Length;
 
-            if (oldValue != Notify.Value)
+            for (int i = 0; i < tabs.Length; i++)
             {
-                MelonPreferences.Save();
+                if (GUI.Button(new Rect(i * width,35,width,30),tabs[i], selectedTab == i ? activeTabStyle : tabStyle ))
+                {
+                    selectedTab = i;
+                }
             }
+
+
+            Rect content = new Rect(0, 65, window.width, window.height - 65);
+
+            //MAIN
+            GUI.Label( new Rect(10,80,200,20),"Not done yet" );
+
+
+            GUI.DragWindow(new Rect( 0, 0, window.width, 35 ));
+        }
+
+
+
+        private void SetupStyles()
+        {
+            if (windowStyle != null)
+                return;
+
+            windowStyle = new GUIStyle(GUI.skin.window);
+            windowStyle.normal.background = MakeTexture(new Color(0.2f, 0.21f, 0.23f, 0.95f));
+            windowStyle.normal.textColor = Color.clear;
+            windowStyle.onNormal.textColor = Color.clear;
+
+            headerStyle = new GUIStyle(GUI.skin.box);
+            headerStyle.normal.background = MakeTexture(new Color(0.345f, 0.396f, 0.949f)); // Blurple
+            headerStyle.normal.textColor = Color.white;
+            headerStyle.fontStyle = FontStyle.Bold;
+            headerStyle.alignment = TextAnchor.MiddleCenter;
+
+            tabStyle = new GUIStyle(GUI.skin.button);
+            tabStyle.normal.background = MakeTexture(new Color(0.25f, 0.26f, 0.29f));
+            tabStyle.normal.textColor = Color.white;
+
+            activeTabStyle = new GUIStyle(tabStyle);
+            activeTabStyle.normal.background = MakeTexture(new Color(0.345f, 0.396f, 0.949f));
+            activeTabStyle.normal.textColor = Color.white;
+        }
+
+
+
+        private Texture2D MakeTexture(Color color)
+        {
+            Texture2D tex = new Texture2D(1, 1);
+
+            tex.SetPixel(0, 0, color);
+            tex.Apply();
+
+            return tex;
         }
     }
 
