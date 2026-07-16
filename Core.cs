@@ -1,11 +1,8 @@
 ﻿using MelonLoader;
-using Mono.CSharp;
-using System;
-using System.IO;
+using Newtonsoft.Json;
 using System.Net;
 using System.Text;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 [assembly: MelonInfo(typeof(Poppers_server_notifier.Core), "Poppers server notifier", "1.0.0", "Popper", null)]
 [assembly: MelonGame("Alta", "A Township Tale")]
@@ -15,28 +12,37 @@ namespace Poppers_server_notifier
     public class Core : MelonMod
     {
         // Menu Stuff
-        private Rect window = new Rect(20, 20, 310, 500);
+        private Rect window = new Rect(20, 20, 310, 310);
 
         private GUIStyle windowStyle;
         private GUIStyle headerStyle;
         private GUIStyle tabStyle;
         private GUIStyle activeTabStyle;
+        private const float Padding = 10f;
+        private const float RowSpacing = 8f;
+        private const float LabelHeight = 20f;
+        private const float TextHeight = 22f;
+        private const float ToggleHeight = 20f;
+        private const float ButtonHeight = 30f;
+        private const float HeaderHeight = 35f;
 
-        private int selectedTab = 0;
+        private string testMessage = "Test message from Poppers Discord Server Notifier mod.";
 
         // Melon Stuff
         private MelonPreferences_Category SNCFG;
         private MelonPreferences_Entry<bool> Notify;
         private MelonPreferences_Entry<string> Webhook;
+        private MelonPreferences_Entry<string> ServerName;
 
         public override void OnInitializeMelon()
         {
             LoggerInstance.Msg("I LIVE.");
 
             SNCFG = MelonPreferences.CreateCategory("SNCFG");
-            
-            Notify = SNCFG.CreateEntry<bool>("Enable webhook notifications", true);
+
+            Notify = SNCFG.CreateEntry<bool>("Enable webhook notifications", false);
             Webhook = SNCFG.CreateEntry<string>("Webhook URL", "https://discord.com/api/webhooks/your_webhook_url_here");
+            ServerName = SNCFG.CreateEntry<string>("Server Name", "My Server");
 
             MelonPreferences.Save();
 
@@ -52,34 +58,45 @@ namespace Poppers_server_notifier
 
         private void DrawWindow(int id)
         {
-            // Header
-            GUI.Box(new Rect(0, 0, window.width, 35), "POPPERS DISCORD SERVER NOTIFYER", headerStyle);
+            float y = HeaderHeight + Padding;
 
-
-            // Tabs
-            string[] tabs ={"TEST WEBHOOK","SAVE"};
-
-            float width = window.width / tabs.Length;
-
-            for (int i = 0; i < tabs.Length; i++)
+            void Next(float height)
             {
-                if (GUI.Button(new Rect(i * width,35,width,30),tabs[i], selectedTab == i ? activeTabStyle : tabStyle ))
-                {
-                    selectedTab = i;
-                }
+                y += height + RowSpacing;
             }
 
+            GUI.Box(new Rect(0, 0, window.width, HeaderHeight), "POPPERS DISCORD SERVER NOTIFIER", headerStyle);
 
-            Rect content = new Rect(0, 65, window.width, window.height - 65);
+            GUI.Label(new Rect(Padding, y, 100, LabelHeight), "Server Name:");
+            Next(LabelHeight);
 
-            //MAIN
-            GUI.Label( new Rect(10,80,200,20),"Not done yet" );
+            ServerName.Value = GUI.TextField(new Rect(Padding, y, window.width - Padding * 2, TextHeight), ServerName.Value);
+            Next(TextHeight);
 
+            GUI.Label(new Rect(Padding, y, 100, 20), "Webhook:");
+            Next(LabelHeight);
 
-            GUI.DragWindow(new Rect( 0, 0, window.width, 35 ));
+            Webhook.Value = GUI.TextField(new Rect(Padding, y, window.width - Padding * 2, 22), Webhook.Value);
+            Next(TextHeight);
+
+            Notify.Value = GUI.Toggle(new Rect(Padding, y, 180, 20), Notify.Value, "Enable Notifications");
+            Next(20);
+
+            float buttonWidth = (window.width - Padding * 3) / 2;
+
+            if (GUI.Button(new Rect(Padding, y, buttonWidth, ButtonHeight), "Test Webhook"))
+            {
+                WebHookSender.SendMessage(Webhook.Value, testMessage);
+            }
+
+            if (GUI.Button(new Rect(Padding * 2 + buttonWidth, y, buttonWidth, ButtonHeight), "Save"))
+            {
+                MelonPreferences.Save();
+                MelonLogger.Msg("Preferences saved.");
+            }
+
+            GUI.DragWindow(new Rect(0, 0, window.width, HeaderHeight));
         }
-
-
 
         private void SetupStyles()
         {
@@ -87,7 +104,7 @@ namespace Poppers_server_notifier
                 return;
 
             windowStyle = new GUIStyle(GUI.skin.window);
-            windowStyle.normal.background = MakeTexture(new Color(0.2f, 0.21f, 0.23f, 0.95f));
+            windowStyle.normal.background = MakeTexture(new Color(0.0f, 0.0f, 0.0f, 0.70f));
             windowStyle.normal.textColor = Color.clear;
             windowStyle.onNormal.textColor = Color.clear;
 
@@ -117,29 +134,107 @@ namespace Poppers_server_notifier
 
             return tex;
         }
-    }
 
-    public class WebHookSender
-    {
-        public static void Send(string webhook, string message)
+        private void SendServerNotifications() 
         {
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-
-            var request = (HttpWebRequest)WebRequest.Create(webhook);
-            request.Method = "POST";
-            request.ContentType = "application/json";
-
-            string json = "{\"content\":\"" + message.Replace("\"", "\\\"") + "\"}";
-            byte[] bytes = Encoding.UTF8.GetBytes(json);
-
-            using (var stream = request.GetRequestStream())
+            if (Notify.Value)
             {
-                stream.Write(bytes, 0, bytes.Length);
+                DiscordEmbed embed = new DiscordEmbed
+                {
+                    title = "Server Notification",
+                    description = $"Server Name: {ServerName.Value}\nStatus: Online",
+                    color = 0x00FF00, // Green
+                    footer = new DiscordFooter { text = "Poppers Server Notifier" },
+                    timestamp = DateTime.UtcNow.ToString("o")
+                };
+                WebHookSender.SendEmbed(Webhook.Value, embed);
+            }
+        }
+
+        public class DiscordEmbed
+        {
+            public string title;
+            public string description;
+            public int color;
+            public DiscordFooter footer;
+            public string timestamp;
+        }
+
+        public class DiscordFooter
+        {
+            public string text;
+        }
+
+        public static class WebHookSender
+        {
+            private static bool IsWebhookValid(string webhook)
+            {
+                return !string.IsNullOrWhiteSpace(webhook)
+                    && webhook.StartsWith(
+                        "https://discord.com/api/webhooks/",
+                        StringComparison.OrdinalIgnoreCase);
             }
 
-            using (var response = (HttpWebResponse)request.GetResponse())
+            private static void SendJson(string webhook, string json)
             {
-                // Discord returns HTTP 204 on success.
+                if (!IsWebhookValid(webhook))
+                {
+                    MelonLogger.Warning("Webhook URL is invalid.");
+                    return;
+                }
+
+                try
+                {
+                    ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+
+                    var request = (HttpWebRequest)WebRequest.Create(webhook);
+                    request.Method = "POST";
+                    request.ContentType = "application/json";
+
+                    byte[] bytes = Encoding.UTF8.GetBytes(json);
+                    request.ContentLength = bytes.Length;
+
+                    using (var stream = request.GetRequestStream())
+                    {
+                        stream.Write(bytes, 0, bytes.Length);
+                    }
+
+                    using (var response = (HttpWebResponse)request.GetResponse())
+                    {
+                        if (response.StatusCode != HttpStatusCode.NoContent)
+                        {
+                            throw new Exception($"Discord returned {(int)response.StatusCode}");
+                        }
+                    }
+                }
+                catch (WebException ex)
+                {
+                    MelonLogger.Error($"Webhook request failed: {ex.Message}");
+                }
+                catch (Exception ex)
+                {
+                    MelonLogger.Error(ex.ToString());
+                }
+            }
+
+            public static void SendMessage(string webhook, string message)
+            {
+                var payload = new
+                {
+                    content = message
+                };
+
+                SendJson(webhook, JsonConvert.SerializeObject(payload));
+            }
+
+            public static void SendEmbed(string webhook, DiscordEmbed embed)
+            {
+                var payload = new
+                {
+                    embeds = new[] { embed }
+                };
+
+                SendJson(webhook, JsonConvert.SerializeObject(payload));
             }
         }
     }
