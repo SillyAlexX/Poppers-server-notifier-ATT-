@@ -77,6 +77,9 @@ namespace Poppers_server_notifier
                 WebHookSender.SendMessage(
                     Config.Webhook.Value,
                     testMessage);
+                WebHookSender.SendMessage(
+                    Config.Webhook.Value, 
+                    Config.ServerName.Value);
             }
 
             if (GUI.Button(

@@ -8,6 +8,8 @@ namespace Poppers_server_notifier
 {
     public static class WebHookSender
     {
+        public const string DefaultUsername = "Poppers Server Notifier";
+        public const string DefaultAvatar = "https://raw.githubusercontent.com/SillyAlexX/Poppers-server-notifier-ATT-/refs/heads/master/Images/Screenshot%202025-01-28%20213952.png";
         private static bool IsWebhookValid(string webhook)
         {
             return !string.IsNullOrWhiteSpace(webhook) &&
@@ -57,20 +59,22 @@ namespace Poppers_server_notifier
 
         public static void SendMessage(string webhook, string message)
         {
-            SendJson(webhook,
-                JsonConvert.SerializeObject(new
-                {
-                    content = message
-                }));
+            var payload = new
+            {
+                username = DefaultUsername,
+                avatar_url = DefaultAvatar,
+                content = message
+            };
+
+            SendJson(webhook, JsonConvert.SerializeObject(payload));
         }
 
-        public static void SendEmbed(string webhook, DiscordEmbed embed,
-            string username = null, string avatarUrl = null)
+        public static void SendEmbed(string webhook, DiscordEmbed embed)
         {
             var payload = new
             {
-                username = username,
-                avatar_url = avatarUrl,
+                username = DefaultUsername,
+                avatar_url = DefaultAvatar,
                 embeds = new[] { embed }
             };
 
