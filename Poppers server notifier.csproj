@@ -666,7 +666,13 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<Compile Include="Config.cs" />
 		<Compile Include="Core.cs" />
+		<Compile Include="DiscordModels.cs" />
+		<Compile Include="GUIManager.cs" />
+		<Compile Include="GUIStyles.cs" />
+		<Compile Include="ServerNotifier.cs" />
+		<Compile Include="WebHookSender.cs" />
 		<Content Include="Directory.Build.props" />
 	</ItemGroup>
 	
