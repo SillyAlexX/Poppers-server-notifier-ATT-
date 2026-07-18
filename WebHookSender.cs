@@ -64,13 +64,17 @@ namespace Poppers_server_notifier
                 }));
         }
 
-        public static void SendEmbed(string webhook, DiscordEmbed embed)
+        public static void SendEmbed(string webhook, DiscordEmbed embed,
+            string username = null, string avatarUrl = null)
         {
-            SendJson(webhook,
-                JsonConvert.SerializeObject(new
-                {
-                    embeds = new[] { embed }
-                }));
+            var payload = new
+            {
+                username = username,
+                avatar_url = avatarUrl,
+                embeds = new[] { embed }
+            };
+
+            SendJson(webhook, JsonConvert.SerializeObject(payload));
         }
     }
 }

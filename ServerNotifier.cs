@@ -28,7 +28,7 @@ namespace Poppers_server_notifier
                 timestamp = DateTime.UtcNow.ToString("o")
             };
 
-            WebHookSender.SendEmbed(Config.Webhook.Value, embed);
+            WebHookSender.SendEmbed(Config.Webhook.Value, embed, "Poppers Server Notifier", "");
 
             if (GameModeManager.CurrentMode is ServerHostingGameMode)
             {
