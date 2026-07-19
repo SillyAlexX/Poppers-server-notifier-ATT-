@@ -19,5 +19,10 @@ namespace Poppers_server_notifier
 
             MelonEvents.OnGUI.Subscribe(GUIManager.Draw, 100);
         }
+
+        public override void OnDeinitializeMelon()
+        {
+            ServerNotifier._serverNotified = false;
+        }
     }
 }
