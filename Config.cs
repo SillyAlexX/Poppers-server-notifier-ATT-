@@ -8,7 +8,6 @@ namespace Poppers_server_notifier
 
         public static MelonPreferences_Entry<bool> Notify;
         public static MelonPreferences_Entry<string> Webhook;
-        public static MelonPreferences_Entry<string> ServerName;
 
         public static void Initialize()
         {
@@ -21,10 +20,6 @@ namespace Poppers_server_notifier
             Webhook = Category.CreateEntry(
                 "Webhook URL",
                 "https://discord.com/api/webhooks/your_webhook_url_here");
-
-            ServerName = Category.CreateEntry(
-                "Server Name",
-                "My Server");
 
             MelonPreferences.Save();
         }

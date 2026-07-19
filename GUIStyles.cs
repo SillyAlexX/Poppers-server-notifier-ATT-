@@ -6,6 +6,7 @@ namespace Poppers_server_notifier
     {
         public static GUIStyle Window;
         public static GUIStyle Header;
+        public static GUIStyle readOnlyFieldStyle;
 
         public static void Initialize()
         {
@@ -22,6 +23,10 @@ namespace Poppers_server_notifier
             Header.normal.textColor = Color.white;
             Header.fontStyle = FontStyle.Bold;
             Header.alignment = TextAnchor.MiddleCenter;
+
+            readOnlyFieldStyle = new GUIStyle(GUI.skin.textField);
+            readOnlyFieldStyle.normal.background = MakeTexture(new Color(0.15f, 0.15f, 0.15f));
+            readOnlyFieldStyle.normal.textColor = Color.gray;
         }
 
         private static Texture2D MakeTexture(Color color)

@@ -33,7 +33,7 @@ namespace Poppers_server_notifier
             GUI.Label(new Rect(Padding, y, 100, LabelHeight), "Server Name:");
             Next(LabelHeight);
 
-            Config.ServerName.Value = GUI.TextField(new Rect(Padding, y, window.width - Padding * 2, TextHeight), Config.ServerName.Value);
+            GUI.TextField(new Rect(Padding, y, window.width - Padding * 2, TextHeight), GameModeManager.CurrentGameServerInfo.Name, GUIStyles.readOnlyFieldStyle);
             Next(TextHeight);
 
             GUI.Label(new Rect(Padding, y, 100, LabelHeight), "Webhook:");
