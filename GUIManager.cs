@@ -1,4 +1,5 @@
-﻿using MelonLoader;
+﻿using Alta.Api.DataTransferModels.Models.Responses;
+using MelonLoader;
 using UnityEngine;
 
 namespace Poppers_server_notifier
@@ -24,6 +25,9 @@ namespace Poppers_server_notifier
 
         private static void DrawWindow(int id)
         {
+            GameServerInfo info = GameModeManager.CurrentGameServerInfo;
+            string serverName = info?.Name ?? "Not Hosting";
+
             float y = HeaderHeight + Padding;
 
             void Next(float h) => y += h + RowSpacing;
@@ -33,7 +37,7 @@ namespace Poppers_server_notifier
             GUI.Label(new Rect(Padding, y, 100, LabelHeight), "Server Name:");
             Next(LabelHeight);
 
-            GUI.TextField(new Rect(Padding, y, window.width - Padding * 2, TextHeight), GameModeManager.CurrentGameServerInfo.Name, GUIStyles.readOnlyFieldStyle);
+            GUI.TextField(new Rect(Padding, y, window.width - Padding * 2, TextHeight), serverName, GUIStyles.readOnlyFieldStyle);
             Next(TextHeight);
 
             GUI.Label(new Rect(Padding, y, 100, LabelHeight), "Webhook:");
