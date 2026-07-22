@@ -2,8 +2,9 @@
 using Alta.Networking.Scripts.Player;
 using HarmonyLib;
 using MelonLoader;
+using Poppers_server_notifier.Modstuff;
 
-[assembly: MelonInfo(typeof(Poppers_server_notifier.Core), "Poppers server notifier", "1.0.0", "Popper", null)]
+[assembly: MelonInfo(typeof(Poppers_server_notifier.Core), "Poppers server notifier", "1.5.8", "Popper", null)]
 [assembly: MelonGame("Alta", "A Township Tale")]
 
 namespace Poppers_server_notifier

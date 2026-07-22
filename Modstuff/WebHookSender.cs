@@ -6,7 +6,7 @@ using MelonLoader;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace Poppers_server_notifier
+namespace Poppers_server_notifier.Modstuff
 {
     public static class WebHookSender
     {
@@ -121,6 +121,15 @@ namespace Poppers_server_notifier
 
             string editUrl = $"{webhook.TrimEnd('/')}/messages/{messageId}";
             SendJson(editUrl, JsonConvert.SerializeObject(payload), "PATCH", false);
+        }
+
+        public static void DeleteMessage(string webhook, string messageId)
+        {
+            if (string.IsNullOrEmpty(messageId))
+                return;
+
+            string deleteUrl = $"{webhook.TrimEnd('/')}/messages/{messageId}";
+            SendJson(deleteUrl, "", "DELETE", false);
         }
     }
 }

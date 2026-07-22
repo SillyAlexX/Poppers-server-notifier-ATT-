@@ -1,6 +1,6 @@
 ﻿using MelonLoader;
 
-namespace Poppers_server_notifier
+namespace Poppers_server_notifier.Modstuff
 {
     public static class Config
     {

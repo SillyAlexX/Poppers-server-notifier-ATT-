@@ -666,15 +666,15 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<Compile Include="Config.cs" />
+		<Compile Include="Modstuff\Config.cs" />
 		<Compile Include="Core.cs" />
-		<Compile Include="DiscordModels.cs" />
-		<Compile Include="GUIManager.cs" />
-		<Compile Include="GUIStyles.cs" />
-		<Compile Include="HostDetection.cs" />
-		<Compile Include="PlayerUpdates.cs" />
-		<Compile Include="ServerNotifier.cs" />
-		<Compile Include="WebHookSender.cs" />
+		<Compile Include="Modstuff\DiscordModels.cs" />
+		<Compile Include="Modstuff\GUIManager.cs" />
+		<Compile Include="Modstuff\GUIStyles.cs" />
+		<Compile Include="Modstuff\HostDetection.cs" />
+		<Compile Include="Modstuff\PlayerUpdates.cs" />
+		<Compile Include="Modstuff\ServerNotifier.cs" />
+		<Compile Include="Modstuff\WebHookSender.cs" />
 		<Content Include="Directory.Build.props" />
 	</ItemGroup>
 	
