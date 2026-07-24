@@ -1,29 +1,32 @@
 ﻿using MelonLoader;
-using MelonLoader.Logging;
 using MelonLoader.Utils;
+using Poppers_server_notifier.Modstuff;
 
-namespace Poppers_server_notifier.Modstuff
+namespace Poppers_server_notifier
 {
     internal class ServerNotifier
     {
         public static bool _serverNotified = false;
-        private static readonly string MessageIdFilePath = Path.Combine(MelonEnvironment.UserDataDirectory, "PoppersServerNotifier_Messages.txt");
+        private static readonly string MessageIdFilePath = Path.Combine(MelonEnvironment.UserDataDirectory, "PoppersServerNotifier_LastMessageId.txt");
 
         public static void SendServerNotification()
         {
-            if (_serverNotified)
-                return;
-
             if (!Config.Notify.Value)
                 return;
 
-            var embed = CreatePlayerEmbed("Server is up!");
+            int playerCount = PlayerUpdates.OnlinePlayers.Count;
+            string playerListText = playerCount > 0 ? string.Join(", ", PlayerUpdates.OnlinePlayers) : "No players online";
 
+            // Clear out any old message from a previous session first if it exists
+            DeletePreviousMessage();
+
+            var embed = CreatePlayerEmbed("Server is up!", playerCount, playerListText);
+
+            // Send a brand new message and save its ID
             string newMsgId = WebHookSender.SendEmbedAndReturnId(Config.Webhook.Value, embed);
-
             if (!string.IsNullOrEmpty(newMsgId))
             {
-                SaveMessageId(newMsgId);
+                SaveLastMessageId(newMsgId);
             }
 
             MelonLogger.Msg("Server initial notification sent.");
@@ -32,64 +35,53 @@ namespace Poppers_server_notifier.Modstuff
 
         public static void UpdateServerEmbed(string statusMessage)
         {
+            int playerCount = PlayerUpdates.OnlinePlayers.Count;
+            string playerListText = playerCount > 0 ? string.Join(", ", PlayerUpdates.OnlinePlayers) : "No players online";
+
             if (!Config.Notify.Value)
                 return;
 
-            var embed = CreatePlayerEmbed(statusMessage);
-            var messageIds = LoadMessageIds();
+            // 1. Delete the old notification message from Discord
+            DeletePreviousMessage();
 
-            if (messageIds.Count > 0)
+            // 2. Pass both the status message and the player list text here!
+            var embed = CreatePlayerEmbed(statusMessage, playerCount, playerListText);
+            string newMsgId = WebHookSender.SendEmbedAndReturnId(Config.Webhook.Value, embed);
+
+            // 3. Save the new message ID for the next update/leave event
+            if (!string.IsNullOrEmpty(newMsgId))
             {
-                string activeMessageId = messageIds[0];
-                WebHookSender.EditEmbed(Config.Webhook.Value, activeMessageId, embed);
-
-                for (int i = 1; i < messageIds.Count; i++)
-                {
-                    WebHookSender.DeleteMessage(Config.Webhook.Value, messageIds[i]);
-                }
-
-                SaveSingleMessageId(activeMessageId);
-                MelonLogger.Msg(ColorARGB.Chartreuse,"Updated existing Discord embed and cleaned up extra messages.");
+                SaveLastMessageId(newMsgId);
             }
-            else
-            {
-                string newMsgId = WebHookSender.SendEmbedAndReturnId(Config.Webhook.Value, embed);
-                if (!string.IsNullOrEmpty(newMsgId))
-                {
-                    SaveSingleMessageId(newMsgId);
-                }
-            }
+
+            MelonLogger.Msg("Refreshed Discord embed with latest player update.");
         }
 
-        private static DiscordEmbed CreatePlayerEmbed(string headerText)
-        {
-            var playerNames = PlayerList.LastList?
-                .Select(p => p.UserInfo?.Username)
-                .Where(name => !string.IsNullOrEmpty(name))
-                .ToArray();
-
-            string playerListString = playerNames != null && playerNames.Length > 0
-                ? string.Join(", ", playerNames)
-                : "No players online";
-
-            return new DiscordEmbed
-            {
-                title = "Server Online!",
-                description = $"**{headerText}**\n\n**Players Online ({playerNames?.Length ?? 0}):**\n{playerListString}",
-                color = 0x57F287,
-                footer = new DiscordFooter
-                {
-                    text = "Poppers Server Notifier"
-                },
-                timestamp = DateTime.UtcNow.ToString("o")
-            };
-        }
-
-        private static void SaveMessageId(string messageId)
+        private static void DeletePreviousMessage()
         {
             try
             {
-                File.AppendAllLines(MessageIdFilePath, new[] { messageId });
+                if (File.Exists(MessageIdFilePath))
+                {
+                    string lastId = File.ReadAllText(MessageIdFilePath).Trim();
+                    if (!string.IsNullOrEmpty(lastId))
+                    {
+                        WebHookSender.DeleteMessage(Config.Webhook.Value, lastId);
+                    }
+                    File.Delete(MessageIdFilePath); // Clear the file after deleting
+                }
+            }
+            catch (Exception ex)
+            {
+                MelonLogger.Error($"Failed to delete previous message: {ex.Message}");
+            }
+        }
+
+        private static void SaveLastMessageId(string messageId)
+        {
+            try
+            {
+                File.WriteAllText(MessageIdFilePath, messageId);
             }
             catch (Exception ex)
             {
@@ -97,34 +89,19 @@ namespace Poppers_server_notifier.Modstuff
             }
         }
 
-        private static void SaveSingleMessageId(string messageId)
+        private static DiscordEmbed CreatePlayerEmbed(string headerText, int playerCount, string playerListString)
         {
-            try
+            return new DiscordEmbed
             {
-                File.WriteAllText(MessageIdFilePath, messageId + Environment.NewLine);
-            }
-            catch (Exception ex)
-            {
-                MelonLogger.Error($"Failed to overwrite message ID file: {ex.Message}");
-            }
-        }
-
-        private static List<string> LoadMessageIds()
-        {
-            try
-            {
-                if (File.Exists(MessageIdFilePath))
+                title = "Server Online!",
+                description = $"**{headerText}**\n\n**Players Online ({playerCount}):**\n{playerListString}",
+                color = 0x57F287,
+                footer = new DiscordFooter
                 {
-                    return File.ReadAllLines(MessageIdFilePath)
-                        .Where(id => !string.IsNullOrWhiteSpace(id))
-                        .ToList();
-                }
-            }
-            catch (Exception ex)
-            {
-                MelonLogger.Error($"Failed to load message IDs: {ex.Message}");
-            }
-            return new List<string>();
+                    text = "Poppers Server Notifier"
+                },
+                timestamp = DateTime.UtcNow.ToString("o")
+            };
         }
     }
 }
